@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/vector"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer ring -->
+    <path
+        android:pathData="M54,20 A34,34 0 1 0 54,88 A34,34 0 1 0 54,20 Z"
+        android:strokeColor="#FF3B30"
+        android:strokeWidth="4"
+        android:fillColor="#00000000" />
+    <!-- Play triangle -->
+    <path
+        android:pathData="M44,38 L72,54 L44,70 Z"
+        android:fillColor="#FF3B30" />
+    <!-- Download arrow accent, bottom -->
+    <path
+        android:pathData="M40,82 L68,82 L68,86 L40,86 Z"
+        android:fillColor="#2ED573" />
+    <path
+        android:pathData="M54,72 L54,84 M48,78 L54,84 L60,78"
+        android:strokeColor="#2ED573"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+</vector>
