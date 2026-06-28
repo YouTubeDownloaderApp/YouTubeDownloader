@@ -1,4 +1,4 @@
-# MN YT Downloader — Android
+# Youtube Downloader 
 
 A native Android (Kotlin + Jetpack Compose) port of the [MN YouTube Downloader Telegram bot](https://github.com/YouTubeDownloaderApp/YouTubeDownloader). Paste a YouTube link (or search), pick MP4 or MP3, choose a quality, and the file downloads straight to your device's **Downloads/MN_YT_Downloads** folder — no Telegram required.
 
@@ -39,8 +39,6 @@ The app is a thin client for the same backend the original bot used (`Config.YT_
 ```
 APK lands in `app/build/outputs/apk/debug/app-debug.apk`.
 
-### CI (GitHub Actions)
-Push to the repo, or trigger manually — `.github/workflows/build-apk.yml` builds a debug APK on every push and uploads it as a workflow artifact.
 
 ## Community
 
