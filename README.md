@@ -31,4 +31,6 @@ APK lands in `app/build/outputs/apk/debug/app-debug.apk`.
 Downloading content from YouTube may conflict with YouTube's Terms of Service depending on how the app is used and distributed. This project is provided as-is for personal/educational use; you're responsible for how you use and distribute it.
 
 
+## License
 
+This project is licensed under the GNU Public License. See the [LICENSE](LICENSE) file for details.
