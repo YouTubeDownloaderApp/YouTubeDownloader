@@ -16,10 +16,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-/**
- * UI states, mirroring the bot's conversation flow:
- *  Idle -> FetchingInfo -> FormatChoice -> FetchingQuality -> QualityChoice -> Downloading -> Done/Error
- */
 sealed class ScreenState {
     data object Idle : ScreenState()
     data object Loading : ScreenState()
@@ -48,7 +44,11 @@ sealed class ScreenState {
         val speedLabel: String
     ) : ScreenState()
 
-    data class Complete(val title: String, val filePath: String) : ScreenState()
+    data class Complete(
+        val title: String,
+        val filePath: String,
+        val mimeType: String
+    ) : ScreenState()
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -56,14 +56,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow<ScreenState>(ScreenState.Idle)
     val state: StateFlow<ScreenState> = _state
 
-    /** Cache info per videoId so format/quality steps don't refetch. */
     private val infoCache = mutableMapOf<String, VideoInfo>()
 
-    fun reset() {
-        _state.value = ScreenState.Idle
-    }
+    fun reset() { _state.value = ScreenState.Idle }
 
-    /** Entry point: paste/share a YouTube URL or arbitrary text containing one. */
     fun submitUrlOrText(text: String) {
         val url = YouTubeUrlUtil.extractUrl(text)
         if (url == null) {
@@ -79,11 +75,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 val results = SearchClient.search(query)
-                val videos = results.filter { it.type == "video" }
-                if (videos.isEmpty()) {
-                    _state.value = ScreenState.Error("No video results found for \"$query\".")
+                if (results.isEmpty()) {
+                    _state.value = ScreenState.Error("No results found for \"$query\".")
                 } else {
-                    _state.value = ScreenState.SearchResults(query, videos)
+                    _state.value = ScreenState.SearchResults(query, results)
                 }
             } catch (e: Exception) {
                 _state.value = ScreenState.Error("Search failed: ${e.message ?: "unknown error"}")
@@ -115,16 +110,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /** User picked MP4 or MP3 — fetch available qualities. */
     fun chooseFormat(videoId: String, title: String, sourceUrl: String, kind: DownloadKind) {
         _state.value = ScreenState.Loading
         viewModelScope.launch {
             try {
-                val data: FormatResponse = if (kind == DownloadKind.MP4) {
-                    ytApi.getMp4(sourceUrl, null)
-                } else {
-                    ytApi.getMp3(sourceUrl, null)
-                }
+                val data: FormatResponse = if (kind == DownloadKind.MP4) ytApi.getMp4(sourceUrl, null)
+                else ytApi.getMp3(sourceUrl, null)
                 val qualities = data.availableQuality.orEmpty()
                 if (qualities.isEmpty()) {
                     _state.value = ScreenState.Error("No qualities available for this video.")
@@ -137,22 +128,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /** User picked a specific quality — resolve the download URL, then hand off to the service. */
-    fun chooseQuality(
-        videoId: String,
-        title: String,
-        sourceUrl: String,
-        kind: DownloadKind,
-        quality: Int
-    ) {
+    fun chooseQuality(videoId: String, title: String, sourceUrl: String, kind: DownloadKind, quality: Int) {
         _state.value = ScreenState.Loading
         viewModelScope.launch {
             try {
-                val data: FormatResponse = if (kind == DownloadKind.MP4) {
-                    ytApi.getMp4(sourceUrl, quality)
-                } else {
-                    ytApi.getMp3(sourceUrl, quality)
-                }
+                val data: FormatResponse = if (kind == DownloadKind.MP4) ytApi.getMp4(sourceUrl, quality)
+                else ytApi.getMp3(sourceUrl, quality)
                 if (!data.status || data.url == null) {
                     _state.value = ScreenState.Error("The server couldn't prepare this download.")
                     return@launch
@@ -181,8 +162,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _state.value = ScreenState.Downloading(title, pct, speedLabel)
     }
 
-    fun onDownloadComplete(title: String, filePath: String) {
-        _state.value = ScreenState.Complete(title, filePath)
+    fun onDownloadComplete(title: String, filePath: String, mimeType: String) {
+        _state.value = ScreenState.Complete(title, filePath, mimeType)
     }
 
     fun onDownloadFailed(message: String) {
