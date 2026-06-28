@@ -33,4 +33,4 @@ Downloading content from YouTube may conflict with YouTube's Terms of Service de
 
 ## License
 
-This project is licensed under the GNU Public License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU GENERAL PUBLIC LICENSE. See the [LICENSE](LICENSE) file for details.
