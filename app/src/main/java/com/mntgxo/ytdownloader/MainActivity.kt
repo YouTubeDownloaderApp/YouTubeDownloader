@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -20,14 +21,7 @@ import androidx.core.content.ContextCompat
 import com.mntgxo.ytdownloader.download.DownloadForegroundService
 import com.mntgxo.ytdownloader.ui.MainViewModel
 import com.mntgxo.ytdownloader.ui.ScreenState
-import com.mntgxo.ytdownloader.ui.screens.DownloadCompleteScreen
-import com.mntgxo.ytdownloader.ui.screens.DownloadingScreen
-import com.mntgxo.ytdownloader.ui.screens.ErrorScreen
-import com.mntgxo.ytdownloader.ui.screens.FormatChoiceScreen
-import com.mntgxo.ytdownloader.ui.screens.HomeScreen
-import com.mntgxo.ytdownloader.ui.screens.LoadingScreen
-import com.mntgxo.ytdownloader.ui.screens.QualityChoiceScreen
-import com.mntgxo.ytdownloader.ui.screens.SearchResultsScreen
+import com.mntgxo.ytdownloader.ui.screens.*
 import com.mntgxo.ytdownloader.ui.theme.MNYTDownloaderTheme
 import com.mntgxo.ytdownloader.util.FormatUtil
 
@@ -46,7 +40,8 @@ class MainActivity : ComponentActivity() {
                 }
                 DownloadForegroundService.ACTION_COMPLETE -> {
                     val path = intent.getStringExtra(DownloadForegroundService.EXTRA_RESULT_PATH).orEmpty()
-                    viewModel.onDownloadComplete(pendingTitle, path)
+                    val mime = intent.getStringExtra(DownloadForegroundService.EXTRA_RESULT_MIME).orEmpty()
+                    viewModel.onDownloadComplete(pendingTitle, path, mime)
                 }
                 DownloadForegroundService.ACTION_FAILED -> {
                     val err = intent.getStringExtra(DownloadForegroundService.EXTRA_ERROR).orEmpty()
@@ -58,7 +53,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         requestNotificationPermissionIfNeeded()
         handleIncomingShare(intent)
 
@@ -87,51 +81,38 @@ class MainActivity : ComponentActivity() {
                             onSubmit = { viewModel.submitUrlOrText(it) },
                             onSearch = { viewModel.search(it) }
                         )
-
                         is ScreenState.Loading -> LoadingScreen()
-
                         is ScreenState.SearchResults -> SearchResultsScreen(
-                            query = s.query,
-                            results = s.results,
+                            query = s.query, results = s.results,
                             onBack = { viewModel.reset() },
                             onSelect = { viewModel.selectSearchResult(it) }
                         )
-
                         is ScreenState.FormatChoice -> FormatChoiceScreen(
-                            title = s.title,
-                            thumbnail = s.thumbnail,
+                            title = s.title, thumbnail = s.thumbnail,
                             onBack = { viewModel.reset() },
                             onChooseFormat = { kind ->
                                 pendingTitle = s.title
                                 viewModel.chooseFormat(s.videoId, s.title, s.sourceUrl, kind)
                             }
                         )
-
                         is ScreenState.QualityChoice -> QualityChoiceScreen(
-                            title = s.title,
-                            kind = s.kind,
-                            qualities = s.qualities,
+                            title = s.title, kind = s.kind, qualities = s.qualities,
                             onBack = { viewModel.reset() },
                             onChooseQuality = { q ->
                                 pendingTitle = s.title
                                 viewModel.chooseQuality(s.videoId, s.title, s.sourceUrl, s.kind, q)
                             }
                         )
-
                         is ScreenState.Downloading -> DownloadingScreen(
-                            title = s.title,
-                            progressPct = s.progressPct,
-                            speedLabel = s.speedLabel
+                            title = s.title, progressPct = s.progressPct, speedLabel = s.speedLabel
                         )
-
                         is ScreenState.Complete -> DownloadCompleteScreen(
                             title = s.title,
+                            onPlay = { playFile(s.filePath, s.mimeType) },
                             onDone = { viewModel.reset() }
                         )
-
                         is ScreenState.Error -> ErrorScreen(
-                            message = s.message,
-                            onRetry = { viewModel.reset() }
+                            message = s.message, onRetry = { viewModel.reset() }
                         )
                     }
                 }
@@ -139,31 +120,35 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun playFile(filePath: String, mimeType: String) {
+        try {
+            val uri = Uri.parse(filePath)
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, mimeType)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(intent, "Play with..."))
+        } catch (e: Exception) { /* no player installed */ }
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleIncomingShare(intent)
     }
 
-    /** If a YouTube link was shared into the app via Android's share sheet, auto-submit it. */
     private fun handleIncomingShare(intent: Intent?) {
         if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-            val text = intent.getStringExtra(Intent.EXTRA_TEXT)
-            if (!text.isNullOrBlank()) {
-                viewModel.submitUrlOrText(text)
-            }
+            intent.getStringExtra(Intent.EXTRA_TEXT)?.takeIf { it.isNotBlank() }
+                ?.let { viewModel.submitUrlOrText(it) }
         }
     }
 
     private fun requestNotificationPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val granted = ContextCompat.checkSelfPermission(
-                this, android.Manifest.permission.POST_NOTIFICATIONS
-            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-            if (!granted) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
-                    1001
+                    this, arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001
                 )
             }
         }

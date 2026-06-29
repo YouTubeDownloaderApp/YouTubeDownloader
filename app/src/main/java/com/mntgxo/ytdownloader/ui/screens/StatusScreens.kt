@@ -13,47 +13,24 @@ import com.mntgxo.ytdownloader.ui.theme.AccentGreen
 import com.mntgxo.ytdownloader.ui.theme.TextSecondary
 
 @Composable
-fun DownloadingScreen(
-    title: String,
-    progressPct: Int,
-    speedLabel: String
-) {
+fun DownloadingScreen(title: String, progressPct: Int, speedLabel: String) {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            "Downloading",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
+        Text("Downloading", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(6.dp))
-        Text(
-            title,
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary,
-            maxLines = 2
-        )
-
+        Text(title, style = MaterialTheme.typography.bodyMedium, color = TextSecondary, maxLines = 2)
         Spacer(Modifier.height(28.dp))
-
         LinearProgressIndicator(
             progress = { progressPct / 100f },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(10.dp)
-                .clip(RoundedCornerShape(8.dp)),
+            modifier = Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(8.dp)),
             color = AccentGreen,
             trackColor = androidx.compose.ui.graphics.Color(0xFF223240)
         )
-
         Spacer(Modifier.height(10.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("$progressPct%", style = MaterialTheme.typography.bodyMedium)
             Text(speedLabel, style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
         }
@@ -61,10 +38,7 @@ fun DownloadingScreen(
 }
 
 @Composable
-fun DownloadCompleteScreen(
-    title: String,
-    onDone: () -> Unit
-) {
+fun DownloadCompleteScreen(title: String, onPlay: () -> Unit, onDone: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -72,25 +46,31 @@ fun DownloadCompleteScreen(
     ) {
         Text("✅", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(10.dp))
-        Text(
-            "Download complete",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
+        Text("Download complete", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(6.dp))
         Text(title, style = MaterialTheme.typography.bodyMedium, color = TextSecondary, maxLines = 2)
-        Spacer(Modifier.height(24.dp))
-        Button(onClick = onDone) {
+        Spacer(Modifier.height(28.dp))
+        Button(
+            onClick = onPlay,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = AccentGreen)
+        ) {
+            Text("▶  Play", fontWeight = FontWeight.Bold)
+        }
+        Spacer(Modifier.height(12.dp))
+        OutlinedButton(
+            onClick = onDone,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(14.dp)
+        ) {
             Text("Download another")
         }
     }
 }
 
 @Composable
-fun ErrorScreen(
-    message: String,
-    onRetry: () -> Unit
-) {
+fun ErrorScreen(message: String, onRetry: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -98,21 +78,11 @@ fun ErrorScreen(
     ) {
         Text("❌", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(10.dp))
-        Text(
-            "Something went wrong",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
+        Text("Something went wrong", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(6.dp))
-        Text(
-            message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary
-        )
+        Text(message, style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
         Spacer(Modifier.height(24.dp))
-        Button(onClick = onRetry) {
-            Text("Back to start")
-        }
+        Button(onClick = onRetry) { Text("Back to start") }
     }
 }
 

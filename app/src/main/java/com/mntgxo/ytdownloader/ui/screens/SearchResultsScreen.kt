@@ -39,11 +39,9 @@ fun SearchResultsScreen(
                 Text("\"$query\"", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
         }
-
         Spacer(Modifier.height(12.dp))
-
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(results.take(8)) { video ->
+            items(results.take(10)) { video ->
                 SearchResultRow(video, onClick = { onSelect(video) })
             }
         }
@@ -58,24 +56,18 @@ private fun SearchResultRow(video: SearchResult, onClick: () -> Unit) {
         color = SurfaceElevated,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier.padding(10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (!video.thumbnail.isNullOrBlank()) {
+        Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            val artwork = video.artworkUrl
+            if (!artwork.isNullOrBlank()) {
                 AsyncImage(
-                    model = video.thumbnail,
+                    model = artwork,
                     contentDescription = video.title,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(width = 96.dp, height = 64.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                    modifier = Modifier.size(width = 96.dp, height = 64.dp).clip(RoundedCornerShape(10.dp))
                 )
             } else {
                 Box(
-                    modifier = Modifier
-                        .size(width = 96.dp, height = 64.dp)
-                        .clip(RoundedCornerShape(10.dp)),
+                    modifier = Modifier.size(width = 96.dp, height = 64.dp).clip(RoundedCornerShape(10.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = AccentRed)
@@ -85,17 +77,18 @@ private fun SearchResultRow(video: SearchResult, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     video.title ?: "Untitled",
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                    maxLines = 2, overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium
                 )
-                if (!video.author.isNullOrBlank()) {
-                    Text(
-                        video.author,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary
-                    )
+                val sub = video.subtitle
+                if (sub.isNotBlank()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(sub, style = MaterialTheme.typography.bodySmall, color = TextSecondary,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                if (!video.timestamp.isNullOrBlank()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(video.timestamp, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                 }
             }
         }

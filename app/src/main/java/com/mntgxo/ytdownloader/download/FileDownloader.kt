@@ -27,7 +27,7 @@ class FileDownloader(private val context: Context) {
     )
 
     sealed class Result {
-        data class Success(val filePath: String, val fileName: String) : Result()
+        data class Success(val filePath: String, val fileName: String, val mimeType: String) : Result()
         data class Failure(val message: String) : Result()
     }
 
@@ -67,7 +67,6 @@ class FileDownloader(private val context: Context) {
         onProgress: (Progress) -> Unit
     ): Result {
         val resolver = context.contentResolver
-
         val isVideo = mimeType.startsWith("video")
         val collection = if (isVideo) {
             MediaStore.Video.Media.EXTERNAL_CONTENT_URI
@@ -79,7 +78,6 @@ class FileDownloader(private val context: Context) {
         } else {
             "${Environment.DIRECTORY_MUSIC}/MN_YT_Downloads"
         }
-
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
             put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
@@ -92,7 +90,7 @@ class FileDownloader(private val context: Context) {
             copyWithProgress(input, output, total, onProgress)
         } ?: return Result.Failure("Could not open output stream")
 
-        return Result.Success(uri.toString(), fileName)
+        return Result.Success(uri.toString(), fileName, mimeType)
     }
 
     private fun saveViaLegacyFile(
@@ -113,7 +111,7 @@ class FileDownloader(private val context: Context) {
         outFile.outputStream().use { output ->
             copyWithProgress(input, output, total, onProgress)
         }
-        return Result.Success(outFile.absolutePath, fileName)
+        return Result.Success(outFile.absolutePath, fileName, mimeType)
     }
 
     private fun copyWithProgress(
@@ -122,7 +120,7 @@ class FileDownloader(private val context: Context) {
         total: Long,
         onProgress: (Progress) -> Unit
     ) {
-        val buffer = ByteArray(256 * 1024)
+        val buffer = ByteArray(4 * 1024 * 1024) // 4 MB buffer
         var downloaded = 0L
         var lastEmit = System.currentTimeMillis()
         val start = System.currentTimeMillis()
@@ -133,7 +131,7 @@ class FileDownloader(private val context: Context) {
                 output.write(buffer, 0, read)
                 downloaded += read
                 val now = System.currentTimeMillis()
-                if (now - lastEmit >= 500) {
+                if (now - lastEmit >= 100) { // emit every 100ms
                     lastEmit = now
                     val elapsedSec = (now - start) / 1000.0
                     val speed = if (elapsedSec > 0) downloaded / elapsedSec else 0.0
