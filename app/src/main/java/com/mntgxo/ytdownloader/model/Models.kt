@@ -2,9 +2,6 @@ package com.mntgxo.ytdownloader.model
 
 import com.google.gson.annotations.SerializedName
 
-/**
- * Response from GET /info?url=...
- */
 data class VideoInfo(
     val title: String? = null,
     val thumbnail: String? = null,
@@ -12,11 +9,6 @@ data class VideoInfo(
     val author: String? = null
 )
 
-/**
- * Response from GET /mp4?url=...&quality=... or GET /mp3?url=...&quality=...
- * When `quality` is omitted, the API is expected to return `availableQuality`
- * so the app can present a quality picker, mirroring the bot's flow.
- */
 data class FormatResponse(
     val status: Boolean = false,
     val url: String? = null,
@@ -26,23 +18,27 @@ data class FormatResponse(
     val availableQuality: List<Int>? = null
 )
 
-/**
- * A single entry returned from GET /search?s=...
- */
+/** Nested author object returned by the search API */
+data class SearchAuthor(
+    val name: String? = null,
+    val url: String? = null
+)
+
 data class SearchResult(
     val type: String? = null,
     val title: String? = null,
     val videoId: String? = null,
-    val thumbnail: String? = null,
-    val duration: String? = null,
-    val author: String? = null
-)
+    val image: String? = null,       // primary artwork field from API
+    val thumbnail: String? = null,   // fallback
+    val timestamp: String? = null,
+    val ago: String? = null,
+    val views: Long? = null,
+    val author: SearchAuthor? = null // nested object, not plain string
+) {
+    val artworkUrl: String? get() = image ?: thumbnail
+    val subtitle: String get() = listOfNotNull(author?.name, ago).joinToString(" · ")
+}
 
-/**
- * The /search endpoint sometimes wraps results in an object instead of
- * returning a bare array. This mirrors the defensive unwrapping logic
- * in the original bot's `search_yt()` helper.
- */
 data class SearchWrapper(
     val results: List<SearchResult>? = null,
     val videos: List<SearchResult>? = null,
@@ -52,9 +48,6 @@ data class SearchWrapper(
 
 enum class DownloadKind { MP4, MP3 }
 
-/**
- * Represents a single download/job, tracked locally while it runs.
- */
 data class DownloadJob(
     val id: String,
     val videoId: String,
