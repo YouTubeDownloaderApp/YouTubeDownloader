@@ -1,4 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">MN YT Downloader</string>
-</resources>
+<string name="cookie_settings">Cookie Settings</string>
+<string name="supported_sites">Supported Sites: YouTube, Twitter, Instagram, TikTok, Facebook, Twitch, Vimeo, Dailymotion, Reddit</string>
+<string name="enter_cookies">Enter YouTube Cookies</string>
+<string name="cookies_saved">Cookies saved successfully</string>
+<string name="invalid_url">Unsupported website URL</string>
+<string name="download_with_cookies">Download with Cookies</string>
